@@ -1,203 +1,24 @@
 
-(function () {
-  "use strict";
-  const bank = window.EXAM_BANK || [];
-  const passages = window.EXAM_PASSAGES || {};
-  const labels = {grammar:"????????",vocabulary:"???????",dialogue:"???????",reading:"Reading"};
-  const letters = ["A","B","C","D"];
-  const $ = function (id) { return document.getElementById(id); };
-  const screens = {start:$("start-screen"),exam:$("exam-screen"),result:$("result-screen")};
-  let attempt = null;
-  let timerId = null;
-
-  function node(tag, cls, text) {
-    const el = document.createElement(tag);
-    if (cls) el.className = cls;
-    if (text !== undefined && text !== null) el.textContent = text;
-    return el;
-  }
-  function shuffle(list) {
-    const a = list.slice();
-    for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
-    return a;
-  }
-  function sample(list, n) { return shuffle(list).slice(0,n); }
-  function showScreen(key) {
-    Object.keys(screens).forEach(function(k){screens[k].hidden=(k!==key);});
-    window.scrollTo({top:0,behavior:"smooth"});
-  }
-  function makeExam() {
-    const g=sample(bank.filter(function(q){return q.type==="grammar";}),22);
-    const v=sample(bank.filter(function(q){return q.type==="vocabulary";}),8);
-    const d=sample(bank.filter(function(q){return q.type==="dialogue";}),10);
-    const groupIds=shuffle(Object.keys(passages)).slice(0,2);
-    const units=g.concat(v,d).map(function(q){return {questions:[q]};});
-    groupIds.forEach(function(pid){
-      units.push({questions:shuffle(bank.filter(function(q){return q.type==="reading"&&q.passageId===pid;}))});
-    });
-    return shuffle(units).reduce(function(all,unit){return all.concat(unit.questions);},[]);
-  }
-  function startExam() {
-    const duration=Number($("duration-select").value)||60;
-    attempt={questions:makeExam(),answers:Object.create(null),flags:new Set(),duration:duration,secondsLeft:duration*60,startedAt:Date.now(),finishedAt:null};
-    $("exam-number").textContent=String(attempt.questions.length);
-    renderTest();
-    showScreen("exam");
-    tick();
-    clearInterval(timerId);
-    timerId=setInterval(tick,1000);
-  }
-  function timeText(seconds) {
-    const m=Math.floor(Math.max(0,seconds)/60), s=Math.max(0,seconds)%60;
-    return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
-  }
-  function tick() {
-    if (!attempt) return;
-    $("timer").textContent=timeText(attempt.secondsLeft);
-    $("timer-box").classList.toggle("timer-urgent",attempt.secondsLeft<=300);
-    if (attempt.secondsLeft<=0) { attempt.secondsLeft=0; finishExam(true); return; }
-    attempt.secondsLeft-=1;
-  }
-  function makePassage(p, review) {
-    const box=node("article","passage-card");
-    const head=node("div","passage-heading");
-    head.appendChild(node("span","passage-label","READING PASSAGE"));
-    head.appendChild(node("h3","",p.title));
-    box.appendChild(head);
-    box.appendChild(node("p","passage-text",p.text));
-    if (review) {
-      const details=node("details","translation");
-      details.appendChild(node("summary","","??????????????"));
-      details.appendChild(node("p","",p.translation));
-      box.appendChild(details);
-    }
-    return box;
-  }
-  function makeQuestion(q,index,review) {
-    const card=node("article","question-card"+(review?(attempt.answers[q.id]===q.answer?" review-correct":" review-wrong"):""));
-    card.id="question-card-"+index;
-    const top=node("div","question-top");
-    const title=node("span","question-number","??? "+(index+1));
-    const topic=node("span","topic-pill",q.topic);
-    top.append(title,topic);
-    if (!review) {
-      const flag=node("button","flag-button"+(attempt.flags.has(q.id)?" is-flagged":""),attempt.flags.has(q.id)?"???????????":"????????????");
-      flag.type="button"; flag.setAttribute("aria-pressed",attempt.flags.has(q.id)?"true":"false");
-      flag.addEventListener("click",function(){if(attempt.flags.has(q.id))attempt.flags.delete(q.id);else attempt.flags.add(q.id);renderNav();renderProgress();renderTest();const target=$("question-card-"+index);if(target)target.scrollIntoView({block:"nearest"});});
-      top.appendChild(flag);
-    } else {
-      const status=attempt.answers[q.id]===q.answer?"√ ???????":"? ????????";
-      top.appendChild(node("span","answer-status",status));
-    }
-    card.appendChild(top);
-    card.appendChild(node("h3","question-prompt",q.stem));
-    const options=node("div",review?"review-options":"answer-options");
-    q.options.forEach(function(opt,i){
-      const choice=node(review?"div":"label","option"+(review?(i===q.answer?" option-correct":(i===attempt.answers[q.id]?" option-incorrect":"")):""));
-      if (!review) {
-        const radio=document.createElement("input"); radio.type="radio"; radio.name="question-"+q.id; radio.value=String(i);
-        radio.checked=attempt.answers[q.id]===i;
-        radio.addEventListener("change",function(){attempt.answers[q.id]=i;renderNav();renderProgress();});
-        choice.appendChild(radio);
-      }
-      choice.appendChild(node("span","option-letter",letters[i]));
-      choice.appendChild(node("span","option-text",opt));
-      if (review&&i===q.answer) choice.appendChild(node("span","choice-mark","????"));
-      if (review&&i===attempt.answers[q.id]&&i!==q.answer) choice.appendChild(node("span","choice-mark","???????????"));
-      options.appendChild(choice);
-    });
-    card.appendChild(options);
-    if (review) {
-      const explain=node("div","explanation");
-      explain.appendChild(node("strong","","???????????????????"));
-      explain.appendChild(node("p","",q.explanation));
-      card.appendChild(explain);
-      const details=node("details","translation");
-      details.appendChild(node("summary","","??????????????"));
-      details.appendChild(node("p","",q.translation));
-      card.appendChild(details);
-    }
-    return card;
-  }
-  function renderTest() {
-    const list=$("question-list"); list.replaceChildren();
-    let lastPassage="";
-    attempt.questions.forEach(function(q,i){
-      if(q.passageId&&q.passageId!==lastPassage){list.appendChild(makePassage(passages[q.passageId],false));lastPassage=q.passageId;}
-      if(!q.passageId)lastPassage="";
-      list.appendChild(makeQuestion(q,i,false));
-    });
-    renderNav(); renderProgress();
-  }
-  function renderNav() {
-    const nav=$("question-nav"); nav.replaceChildren();
-    attempt.questions.forEach(function(q,i){
-      const b=node("button","nav-question"+(attempt.answers[q.id]!==undefined?" is-answered":"")+(attempt.flags.has(q.id)?" is-flagged":"") ,String(i+1));
-      b.type="button"; b.setAttribute("aria-label","????? "+(i+1)+(attempt.answers[q.id]!==undefined?", ???????":""));
-      b.addEventListener("click",function(){const target=$("question-card-"+i);if(target)target.scrollIntoView({behavior:"smooth",block:"center"});});
-      nav.appendChild(b);
-    });
-    $("flagged-count").textContent="??????? "+attempt.flags.size;
-  }
-  function renderProgress() {
-    const done=Object.keys(attempt.answers).length;
-    const pct=Math.round(done/attempt.questions.length*100);
-    $("answered-count").textContent="??????? "+done+" / "+attempt.questions.length;
-    $("progress-percent").textContent=pct+"%";
-    $("progress-fill").style.width=pct+"%";
-  }
-  function finishExam(auto) {
-    if(!attempt||attempt.finishedAt)return;
-    const unanswered=attempt.questions.length-Object.keys(attempt.answers).length;
-    if(!auto&&unanswered>0&&!window.confirm("???????????? "+unanswered+" ??? ??????????????????????"))return;
-    clearInterval(timerId);
-    attempt.finishedAt=Date.now();
-    renderResults(auto);
-    showScreen("result");
-  }
-  function renderResults(auto) {
-    const qs=attempt.questions;
-    const correct=qs.filter(function(q){return attempt.answers[q.id]===q.answer;}).length;
-    const pct=Math.round(correct/qs.length*100);
-    $("score-number").textContent=String(correct);
-    $("score-ring").style.setProperty("--score-angle",(pct*3.6)+"deg");
-    $("result-badge").textContent=pct>=60?"??????????? 60%":"?????????????????? 60%";
-    $("result-title").textContent=pct>=80?"?????????":pct>=60?"???????":"?????????????????";
-    $("result-message").textContent="??? "+pct+"% · "+(auto?"??????????? ???????????????":"?????????????????")+(Object.keys(attempt.answers).length<qs.length?" · ???????? "+(qs.length-Object.keys(attempt.answers).length)+" ???":"");
-    const elapsed=Math.round((attempt.finishedAt-attempt.startedAt)/1000);
-    $("time-taken").textContent="??????? "+timeText(elapsed);
-    const breakdown=$("category-breakdown"); breakdown.replaceChildren();
-    ["grammar","vocabulary","dialogue","reading"].forEach(function(type){
-      const list=qs.filter(function(q){return q.type===type;});
-      const n=list.filter(function(q){return attempt.answers[q.id]===q.answer;}).length;
-      const row=node("div","breakdown-row");
-      const meta=node("div","breakdown-meta"); meta.append(node("span","",labels[type]),node("strong","",n+" / "+list.length));
-      const track=node("div","breakdown-track"); const fill=node("div","breakdown-fill"); fill.style.width=(list.length?Math.round(n/list.length*100):0)+"%"; track.appendChild(fill);
-      row.append(meta,track); breakdown.appendChild(row);
-    });
-    renderReview();
-    try{localStorage.setItem("ee-english-practice-last",JSON.stringify({score:correct,total:qs.length,pct:pct,date:new Date().toLocaleDateString("th-TH")}));}catch(e){}
-  }
-  function renderReview() {
-    const list=$("review-list"); list.replaceChildren(); let last="";
-    attempt.questions.forEach(function(q,i){
-      if(q.passageId&&q.passageId!==last){list.appendChild(makePassage(passages[q.passageId],true));last=q.passageId;}
-      if(!q.passageId)last="";
-      list.appendChild(makeQuestion(q,i,true));
-    });
-  }
-  function loadLastResult() {
-    try{
-      const last=JSON.parse(localStorage.getItem("ee-english-practice-last")||"null");
-      if(last)$("last-result").textContent="????????????? · "+last.score+"/"+last.total+" ????? ("+last.pct+"%) · "+last.date;
-    }catch(e){}
-  }
-  $("start-btn").addEventListener("click",startExam);
-  $("start-btn-secondary").addEventListener("click",startExam);
-  $("submit-btn-side").addEventListener("click",function(){finishExam(false);});
-  $("submit-btn-bottom").addEventListener("click",function(){finishExam(false);});
-  $("retake-btn").addEventListener("click",function(){startExam();});
-  $("home-btn").addEventListener("click",function(){clearInterval(timerId);attempt=null;loadLastResult();showScreen("start");});
-  loadLastResult();
+(function(){
+"use strict";
+const bank=window.EXAM_BANK||[],passages=window.EXAM_PASSAGES||{},labels={grammar:"ไวยากรณ์",error:"Error Identification",vocabulary:"คำศัพท์",dialogue:"บทสนทนา",reading:"Reading"},letters=["A","B","C","D"];
+const $=id=>document.getElementById(id),screens={start:$("start-screen"),exam:$("exam-screen"),result:$("result-screen")};let attempt=null,timerId=null;
+function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined&&text!==null)e.textContent=text;return e;}
+function shuffle(list){const a=list.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function sample(list,n){return shuffle(list).slice(0,n);}
+function showScreen(k){Object.keys(screens).forEach(x=>screens[x].hidden=x!==k);window.scrollTo({top:0,behavior:"smooth"});}
+function makeExam(){const g=sample(bank.filter(q=>q.type==="grammar"),28),e=sample(bank.filter(q=>q.type==="error"),15),v=sample(bank.filter(q=>q.type==="vocabulary"),10),d=sample(bank.filter(q=>q.type==="dialogue"),12),ids=sample(Object.keys(passages),3),units=g.concat(e,v,d).map(q=>({questions:[q]}));ids.forEach(pid=>units.push({questions:shuffle(bank.filter(q=>q.type==="reading"&&q.passageId===pid))}));return shuffle(units).reduce((all,u)=>all.concat(u.questions),[]);}
+function startExam(){const duration=Number($("duration-select").value)||60;attempt={questions:makeExam(),answers:Object.create(null),flags:new Set(),secondsLeft:duration*60,startedAt:Date.now(),finishedAt:null};$("exam-number").textContent=attempt.questions.length;renderTest();showScreen("exam");tick();clearInterval(timerId);timerId=setInterval(tick,1000);}
+function timeText(s){return String(Math.floor(Math.max(0,s)/60)).padStart(2,"0")+":"+String(Math.max(0,s)%60).padStart(2,"0");}
+function tick(){if(!attempt)return;$("timer").textContent=timeText(attempt.secondsLeft);$("timer-box").classList.toggle("timer-urgent",attempt.secondsLeft<=300);if(attempt.secondsLeft<=0){finishExam(true);return;}attempt.secondsLeft--;}
+function makePassage(p,review,start,end){const b=node("article","passage-card"),h=node("div","passage-heading");h.append(node("span","passage-label","READING PASSAGE"),node("h3","",p.title),node("span","passage-range","บทอ่านนี้ใช้ตอบข้อ "+(start+1)+"–"+(end+1)));b.append(h,node("p","passage-text",p.text));if(review){const d=node("details","translation");d.append(node("summary","","ดูคำแปลภาษาไทย"),node("p","",p.translation));b.append(d);}return b;}
+function makeQuestion(q,i,review){const card=node("article","question-card"+(review?(attempt.answers[q.id]===q.answer?" review-correct":" review-wrong"):""));card.id="question-card-"+i;const top=node("div","question-top");top.append(node("span","question-number","ข้อ "+(i+1)),node("span","topic-pill",q.topic));if(!review){const f=node("button","flag-button"+(attempt.flags.has(q.id)?" is-flagged":""),attempt.flags.has(q.id)?"ปักหมุดแล้ว":"ปักหมุดทบทวน");f.type="button";f.setAttribute("aria-pressed",attempt.flags.has(q.id));f.addEventListener("click",()=>{attempt.flags.has(q.id)?attempt.flags.delete(q.id):attempt.flags.add(q.id);renderTest();$("question-card-"+i).scrollIntoView({block:"nearest"});});top.append(f);}else top.append(node("span","answer-status",attempt.answers[q.id]===q.answer?"✓ ถูกต้อง":"✕ ควรทบทวน"));card.append(top,node("h3","question-prompt",q.stem));if(q.type==="error")card.append(node("p","error-instruction","เลือกส่วน A–D ที่ผิด แล้วคิดรูปที่ถูกต้องก่อนดูเฉลย"));const opts=node("div",review?"review-options":"answer-options");q.options.forEach((txt,j)=>{const c=node(review?"div":"label","option"+(review?(j===q.answer?" option-correct":j===attempt.answers[q.id]?" option-incorrect":""):""));if(!review){const r=document.createElement("input");r.type="radio";r.name="q-"+q.id;r.checked=attempt.answers[q.id]===j;r.addEventListener("change",()=>{attempt.answers[q.id]=j;renderNav();renderProgress();});c.append(r);}c.append(node("span","option-letter",letters[j]),node("span","option-text",txt));if(review&&j===q.answer)c.append(node("span","choice-mark","เฉลย"));if(review&&j===attempt.answers[q.id]&&j!==q.answer)c.append(node("span","choice-mark","คำตอบของคุณ"));opts.append(c);});card.append(opts);if(review){const x=node("div","explanation");x.append(node("strong","","ทำไมข้อนี้ตอบแบบนี้"),node("p","",q.explanation));card.append(x);const d=node("details","translation");d.append(node("summary","","ดูคำแปลภาษาไทย"),node("p","",q.translation));card.append(d);}return card;}
+function passageEnd(i){let end=i;while(end+1<attempt.questions.length&&attempt.questions[end+1].passageId===attempt.questions[i].passageId)end++;return end;}function renderTest(){const list=$("question-list");list.replaceChildren();let last="";attempt.questions.forEach((q,i)=>{if(q.passageId&&q.passageId!==last){list.append(makePassage(passages[q.passageId],false,i,passageEnd(i)));last=q.passageId;}if(!q.passageId)last="";list.append(makeQuestion(q,i,false));});renderNav();renderProgress();}
+function renderNav(){const n=$("question-nav");n.replaceChildren();attempt.questions.forEach((q,i)=>{const b=node("button","nav-question"+(attempt.answers[q.id]!==undefined?" is-answered":"")+(attempt.flags.has(q.id)?" is-flagged":""),i+1);b.type="button";b.addEventListener("click",()=>$("question-card-"+i).scrollIntoView({behavior:"smooth",block:"center"}));n.append(b);});$("flagged-count").textContent="ปักหมุด "+attempt.flags.size;}
+function renderProgress(){const n=Object.keys(attempt.answers).length,p=Math.round(n/attempt.questions.length*100);$("answered-count").textContent="ตอบแล้ว "+n+" / "+attempt.questions.length;$("progress-percent").textContent=p+"%";$("progress-fill").style.width=p+"%";}
+function finishExam(auto){if(!attempt||attempt.finishedAt)return;const missing=attempt.questions.length-Object.keys(attempt.answers).length;if(!auto&&missing&&!confirm("ยังไม่ได้ตอบ "+missing+" ข้อ ต้องการส่งคำตอบเลยไหม?"))return;clearInterval(timerId);attempt.finishedAt=Date.now();renderResults(auto);showScreen("result");}
+function renderResults(auto){const qs=attempt.questions,n=qs.filter(q=>attempt.answers[q.id]===q.answer).length,p=Math.round(n/qs.length*100);$("score-number").textContent=n;$("score-ring").style.setProperty("--score-angle",p*3.6+"deg");$("result-badge").textContent=p>=60?"ถึงเป้าซ้อม 60%":"ยังต่ำกว่าเป้าซ้อม 60%";$("result-title").textContent=p>=80?"ยอดเยี่ยม":p>=60?"ทำได้ดี":"มาทบทวนจุดพลาดกัน";$("result-message").textContent="ได้ "+p+"% · "+(auto?"หมดเวลาแล้ว ระบบส่งคำตอบให้":"ส่งคำตอบเรียบร้อย")+(Object.keys(attempt.answers).length<qs.length?" · เว้นว่าง "+(qs.length-Object.keys(attempt.answers).length)+" ข้อ":"");$("time-taken").textContent="ใช้เวลา "+timeText(Math.round((attempt.finishedAt-attempt.startedAt)/1000));const box=$("category-breakdown");box.replaceChildren();["grammar","error","vocabulary","dialogue","reading"].forEach(t=>{const a=qs.filter(q=>q.type===t),s=a.filter(q=>attempt.answers[q.id]===q.answer).length,row=node("div","breakdown-row"),m=node("div","breakdown-meta");m.append(node("span","",labels[t]),node("strong","",s+" / "+a.length));const tr=node("div","breakdown-track"),f=node("div","breakdown-fill");f.style.width=(a.length?Math.round(s/a.length*100):0)+"%";tr.append(f);row.append(m,tr);box.append(row);});renderReview();try{localStorage.setItem("ee-english-practice-last",JSON.stringify({score:n,total:qs.length,pct:p,date:new Date().toLocaleDateString("th-TH")}));}catch(e){}}
+function renderReview(){const list=$("review-list");list.replaceChildren();let last="";attempt.questions.forEach((q,i)=>{if(q.passageId&&q.passageId!==last){list.append(makePassage(passages[q.passageId],true,i,passageEnd(i)));last=q.passageId;}if(!q.passageId)last="";list.append(makeQuestion(q,i,true));});}
+function loadLast(){try{const x=JSON.parse(localStorage.getItem("ee-english-practice-last")||"null");if(x)$("last-result").textContent="ผลครั้งล่าสุด · "+x.score+"/"+x.total+" คะแนน ("+x.pct+"%) · "+x.date;}catch(e){}}
+$("start-btn").addEventListener("click",startExam);$("start-btn-secondary").addEventListener("click",startExam);$("submit-btn-side").addEventListener("click",()=>finishExam(false));$("submit-btn-bottom").addEventListener("click",()=>finishExam(false));$("retake-btn").addEventListener("click",startExam);$("home-btn").addEventListener("click",()=>{clearInterval(timerId);attempt=null;loadLast();showScreen("start");});loadLast();
 })();
-
