@@ -281,6 +281,138 @@ bank.forEach(function(q) {
 });
 if (revisedDialogueCount !== 60) throw Error("Expected 60 revised dialogue items, found " + revisedDialogueCount);
 
+
+// Rebuilt Error Identification bank: every item is a complete sentence with one marked error.
+const errorRevisions = {
+131:{parts:["One of my friend","works","at the airport","near the city center"],answer:0,translation:"เพื่อนคนหนึ่งของฉันทำงานที่สนามบินใกล้ใจกลางเมือง",explanation:"one of ตามด้วยคำนามพหูพจน์ แก้ friend เป็น friends"},
+132:{parts:["The collection of photographs","were displayed","at the town museum","last weekend"],answer:1,translation:"ชุดภาพถ่ายถูกจัดแสดงที่พิพิธภัณฑ์ประจำเมืองเมื่อสุดสัปดาห์ที่ผ่านมา",explanation:"ประธานหลักคือ collection เอกพจน์ แก้ were displayed เป็น was displayed"},
+133:{parts:["We have lived","in this neighborhood","since","five years"],answer:2,translation:"เราอาศัยอยู่ในย่านนี้มาเป็นเวลาห้าปีแล้ว",explanation:"ระยะเวลาใช้ for five years; since ใช้กับจุดเริ่มต้น เช่น since 2021"},
+134:{parts:["Maya looks forward","to","meeting the hiring manager","on next Monday"],answer:3,translation:"มายาตั้งตารอที่จะพบผู้จัดการฝ่ายจ้างงานในวันจันทร์หน้า",explanation:"ไม่ใช้ on หน้า next Monday แก้เป็น next Monday"},
+135:{parts:["Although the road was crowded, but","we arrived","at the station","before the show began"],answer:0,translation:"แม้ถนนจะมีรถติด แต่เราก็มาถึงสถานีก่อนการแสดงเริ่ม",explanation:"ไม่ใช้ although และ but ซ้ำกัน แก้โดยตัด but หรือเปลี่ยน Although เป็น But"},
+136:{parts:["Neither the manager nor the assistants","was available","when the bus arrived","this morning"],answer:1,translation:"ทั้งผู้จัดการและผู้ช่วยไม่ว่างเมื่อรถมาถึงเมื่อเช้านี้",explanation:"neither...nor ใช้กริยาตามประธานใกล้สุด assistants จึงแก้ was เป็น were"},
+137:{parts:["The students decided to take a","short","breaks","before their next lesson"],answer:2,translation:"นักเรียนตัดสินใจพักสั้น ๆ ก่อนบทเรียนถัดไป",explanation:"มี a นำหน้า จึงใช้คำนามเอกพจน์ break"},
+138:{parts:["The courier","delivered the package","to our office","on yesterday"],answer:3,translation:"พนักงานขนส่งนำพัสดุมาส่งที่สำนักงานของเราเมื่อวานนี้",explanation:"ไม่ใช้บุพบท on หน้า yesterday แก้เป็น yesterday"},
+139:{parts:["The woman which lives next door","is","a doctor","at the local hospital"],answer:0,translation:"ผู้หญิงที่อยู่บ้านข้าง ๆ เป็นแพทย์ที่โรงพยาบาลท้องถิ่น",explanation:"ใช้ who หรือ that แทนคน ไม่ใช้ which"},
+140:{parts:["He","enjoys to read","history books","before going to bed"],answer:1,translation:"เขาชอบอ่านหนังสือประวัติศาสตร์ก่อนเข้านอน",explanation:"enjoy ตามด้วย V-ing แก้ enjoys to read เป็น enjoys reading"},
+141:{parts:["There are","fewer","chair","in this room than there were yesterday"],answer:2,translation:"มีเก้าอี้ในห้องนี้น้อยกว่าเมื่อวาน",explanation:"หลัง fewer ใช้คำนามนับได้พหูพจน์ แก้ chair เป็น chairs"},
+142:{parts:["The company plans","to reduce","its waste","by recycle paper"],answer:3,translation:"บริษัทวางแผนลดขยะด้วยการนำกระดาษกลับมาใช้ใหม่",explanation:"by ในความหมายว่าโดยการ ตามด้วย V-ing แก้เป็น by recycling paper"},
+143:{parts:["Despite of the heavy rain,","the players continued","the match","until sunset"],answer:0,translation:"แม้ฝนจะตกหนัก ผู้เล่นก็แข่งต่อไปจนพระอาทิตย์ตก",explanation:"ใช้ despite the heavy rain โดยไม่เติม of หรือใช้ because of the heavy rain"},
+144:{parts:["One of the most interesting books","were","missing from the display","during the exhibition"],answer:1,translation:"หนังสือที่น่าสนใจที่สุดเล่มหนึ่งหายไปจากนิทรรศการ",explanation:"ประธานคือ one เป็นเอกพจน์ แก้ were เป็น was"},
+145:{parts:["The information","you gave me","were","very helpful"],answer:2,translation:"ข้อมูลที่คุณให้ฉันมีประโยชน์มาก",explanation:"information เป็นคำนามนับไม่ได้และใช้กริยาเอกพจน์ แก้ were เป็น was"},
+146:{parts:["A cyclist can ride","quickly","and avoid","dangerous areas careful"],answer:3,translation:"นักปั่นจักรยานสามารถขี่อย่างรวดเร็วและหลีกเลี่ยงพื้นที่อันตรายได้อย่างระมัดระวัง",explanation:"ขยายกริยา avoid ใช้ adverb แก้ careful เป็น carefully"},
+147:{parts:["Every students","has received","an updated timetable","for the new semester"],answer:0,translation:"นักเรียนทุกคนได้รับตารางเรียนฉบับปรับปรุงสำหรับภาคเรียนใหม่แล้ว",explanation:"หลัง every ใช้คำนามเอกพจน์ แก้ students เป็น student"},
+148:{parts:["The children","enjoys","swimming at the community pool","every Saturday"],answer:1,translation:"เด็ก ๆ สนุกกับการว่ายน้ำที่สระชุมชนทุกวันเสาร์",explanation:"children เป็นประธานพหูพจน์ แก้ enjoys เป็น enjoy"},
+149:{parts:["The scientist","has already","explain","the results to the research team"],answer:2,translation:"นักวิทยาศาสตร์อธิบายผลการศึกษาให้ทีมวิจัยฟังแล้ว",explanation:"หลัง has ใช้ past participle แก้ explain เป็น explained"},
+150:{parts:["Residents","received","several","useful advices after the storm"],answer:3,translation:"ชาวบ้านได้รับคำแนะนำที่เป็นประโยชน์หลายข้อหลังพายุ",explanation:"advice เป็นคำนามนับไม่ได้ แก้เป็น useful advice หรือ several pieces of useful advice"},
+151:{parts:["These kind of documents","contain","private information","about job applicants"],answer:0,translation:"เอกสารประเภทนี้มีข้อมูลส่วนตัวเกี่ยวกับผู้สมัครงาน",explanation:"ให้สอดคล้องกับ These ต้องใช้ kinds แก้เป็น These kinds of documents"},
+152:{parts:["The list of names","are","on the desk","near the main entrance"],answer:1,translation:"รายชื่อวางอยู่บนโต๊ะใกล้ทางเข้าหลัก",explanation:"ประธานหลักคือ list ซึ่งเป็นเอกพจน์ แก้ are เป็น is"},
+153:{parts:["My sister has worked","in Seoul","for","2020"],answer:2,translation:"พี่สาวของฉันทำงานในกรุงโซลมาตั้งแต่ปี 2020",explanation:"ใช้ since กับจุดเริ่มต้นของเวลา แก้ for เป็น since"},
+154:{parts:["We will meet","at the library","before","the exam start"],answer:3,translation:"เราจะพบกันที่ห้องสมุดก่อนการสอบเริ่ม",explanation:"ประธาน the exam เป็นเอกพจน์ แก้ start เป็น starts"},
+155:{parts:["If I will have enough time,","I will","help you with","the project after class"],answer:0,translation:"ถ้าฉันมีเวลาพอ ฉันจะช่วยคุณทำโครงการหลังเลิกเรียน",explanation:"First Conditional ใช้ If + Present Simple แก้เป็น If I have enough time"},
+156:{parts:["The report","was write","by the new assistant","yesterday morning"],answer:1,translation:"รายงานถูกเขียนโดยผู้ช่วยคนใหม่เมื่อเช้าวานนี้",explanation:"passive voice ใช้ was + V.3 แก้ write เป็น written"},
+157:{parts:["The receptionist asked","whether","was the manager available","after lunch"],answer:2,translation:"พนักงานต้อนรับถามว่าผู้จัดการว่างหลังอาหารกลางวันหรือไม่",explanation:"คำถามทางอ้อมเรียงประธานก่อนกริยา แก้เป็น whether the manager was available"},
+158:{parts:["She has worked","at this school","for","five years ago"],answer:3,translation:"เธอทำงานที่โรงเรียนนี้มาเป็นเวลาห้าปีแล้ว",explanation:"ใช้ for กับระยะเวลา จึงแก้ five years ago เป็น five years"},
+159:{parts:["Despite the weather was cold,","we continued","the outdoor lesson","until noon"],answer:0,translation:"แม้อากาศจะหนาว เราก็เรียนกลางแจ้งต่อจนถึงเที่ยง",explanation:"despite ต้องตามด้วยคำนามหรือ V-ing แก้เป็น Although the weather was cold หรือ Despite the cold weather"},
+160:{parts:["The student","has decided to taking","an extra course","before graduation"],answer:1,translation:"นักเรียนตัดสินใจลงเรียนเพิ่มอีกหนึ่งวิชาก่อนสำเร็จการศึกษา",explanation:"decide ตามด้วย to + V.1 แก้เป็น has decided to take"},
+161:{parts:["She speaks English","more fluently","as","her cousin does during business meetings"],answer:2,translation:"เธอพูดภาษาอังกฤษได้คล่องกว่าลูกพี่ลูกน้องระหว่างการประชุมธุรกิจ",explanation:"การเปรียบเทียบขั้นกว่าใช้ than แก้ as เป็น than"},
+162:{parts:["This is the restaurant","where","we ate dinner","at last Saturday"],answer:3,translation:"นี่คือร้านอาหารที่เรากินมื้อเย็นกับเพื่อนเมื่อวันเสาร์ที่แล้ว",explanation:"ไม่ใช้ at หน้า last Saturday แก้เป็น last Saturday"},
+163:{parts:["Because the heavy rain,","the school canceled","the outdoor event","this afternoon"],answer:0,translation:"เนื่องจากฝนตกหนัก โรงเรียนจึงยกเลิกกิจกรรมกลางแจ้งในบ่ายวันนี้",explanation:"because ต้องตามด้วยประโยค; หน้า noun phrase ใช้ because of the heavy rain"},
+164:{parts:["The new intern","is interested on","learning the new system","this week"],answer:1,translation:"พนักงานฝึกงานคนใหม่สนใจเรียนรู้ระบบใหม่ในสัปดาห์นี้",explanation:"สำนวนที่ถูกต้องคือ be interested in แก้ on เป็น in"},
+165:{parts:["I look forward","to","hear from you","after the interview"],answer:2,translation:"ฉันตั้งตารอที่จะได้รับข่าวจากคุณหลังการสัมภาษณ์",explanation:"to ใน look forward to เป็นบุพบท จึงตามด้วย V-ing แก้ hear เป็น hearing"},
+166:{parts:["The customer","explained the issue","to the receptionist","polite"],answer:3,translation:"ลูกค้าอธิบายปัญหาให้พนักงานต้อนรับฟังอย่างสุภาพ",explanation:"ขยายกริยา explained ใช้ adverb แก้ polite เป็น politely"},
+167:{parts:["Several advices","from the doctor","were helpful","after the examination"],answer:0,translation:"คำแนะนำหลายข้อจากแพทย์มีประโยชน์หลังการตรวจ",explanation:"advice เป็นคำนามนับไม่ได้ แก้ Several advices เป็น Several pieces of advice"},
+168:{parts:["The teacher asked","where was","the library","because she was new to campus"],answer:1,translation:"ครูถามว่าห้องสมุดอยู่ที่ไหนเพราะเพิ่งมาที่วิทยาเขต",explanation:"คำถามทางอ้อมใช้ where the library was โดยเรียงประธานก่อนกริยา"},
+169:{parts:["The technicians","must","to wear","protective gloves in the laboratory"],answer:2,translation:"ช่างเทคนิคต้องสวมถุงมือป้องกันในห้องปฏิบัติการ",explanation:"หลัง modal must ใช้ V.1 โดยไม่ใส่ to แก้เป็น must wear"},
+170:{parts:["We enjoyed watching","the documentary","about oceans","in last night"],answer:3,translation:"เมื่อคืนเราสนุกกับการชมสารคดีเกี่ยวกับมหาสมุทร",explanation:"ไม่ใช้ in หน้า last night แก้เป็น last night"},
+171:{parts:["Every students in the laboratory","must wear","a protective coat","during experiments"],answer:0,translation:"นักเรียนทุกคนในห้องปฏิบัติการต้องสวมเสื้อคลุมป้องกันระหว่างการทดลอง",explanation:"หลัง every ใช้คำนามเอกพจน์ แก้ students เป็น student"},
+172:{parts:["The packages","was delivered","by the courier","this morning"],answer:1,translation:"พัสดุถูกพนักงานขนส่งนำมาส่งเมื่อเช้านี้",explanation:"packages เป็นพหูพจน์ ใน passive ใช้ were delivered"},
+173:{parts:["The applicants","have","submit","their forms before the deadline"],answer:2,translation:"ผู้สมัครส่งแบบฟอร์มก่อนกำหนดเวลา",explanation:"หลัง have ใช้ V.3 แก้ submit เป็น submitted"},
+174:{parts:["The committee agreed","to meet","at the conference room","on following Monday"],answer:3,translation:"คณะกรรมการตกลงพบกันที่ห้องประชุมในวันจันทร์ถัดไป",explanation:"ต้องมี the ในวลี the following Monday แก้เป็น on the following Monday"},
+175:{parts:["Much people","attended","the outdoor concert","last Saturday"],answer:0,translation:"มีผู้คนจำนวนมากเข้าชมคอนเสิร์ตกลางแจ้งเมื่อวันเสาร์ที่แล้ว",explanation:"people เป็นคำนามนับได้พหูพจน์ ใช้ many people"},
+176:{parts:["If I","would know","the answer, I would tell you","after class"],answer:1,translation:"ถ้าฉันรู้คำตอบ ฉันจะบอกคุณหลังเลิกเรียน",explanation:"Second Conditional ใช้ If + Past Simple แก้ would know เป็น knew"},
+177:{parts:["The researcher","has","wrote","a detailed report for the team"],answer:2,translation:"นักวิจัยเขียนรายงานโดยละเอียดให้ทีมแล้ว",explanation:"หลัง has ใช้ V.3 แก้ wrote เป็น written"},
+178:{parts:["The students","completed","the assignment","careful"],answer:3,translation:"นักเรียนทำงานที่ได้รับมอบหมายอย่างระมัดระวัง",explanation:"ขยายกริยา completed ใช้ adverb แก้ careful เป็น carefully"},
+179:{parts:["I can't find nothing","in my backpack","after the trip","yesterday"],answer:0,translation:"ฉันหาอะไรไม่เจอในกระเป๋าเป้หลังจากเดินทางเมื่อวานนี้",explanation:"ประโยคปฏิเสธใช้ anything ไม่ใช้คำปฏิเสธซ้อน nothing"},
+180:{parts:["The new employees","must finishes","their online training","before serving customers"],answer:1,translation:"พนักงานใหม่ต้องฝึกอบรมออนไลน์ให้เสร็จก่อนให้บริการลูกค้า",explanation:"หลัง modal must ใช้ V.1 แก้ finishes เป็น finish"},
+181:{parts:["A number of","the","applicant","registered for the program this semester"],answer:2,translation:"ผู้สมัครจำนวนหนึ่งลงทะเบียนเข้าร่วมโครงการในภาคเรียนนี้",explanation:"หลัง a number of ต้องใช้คำนามพหูพจน์ แก้ applicant เป็น applicants"},
+182:{parts:["The number of visitors","has increased","steadily","over the last year ago"],answer:3,translation:"จำนวนผู้เข้าชมเพิ่มขึ้นอย่างต่อเนื่องตลอดปีที่ผ่านมา",explanation:"วลี over the last year ไม่ใช้ ago ซ้ำท้าย แก้โดยตัด ago"},
+183:{parts:["Despite of the heavy snow,","the airport remained","open","throughout the morning"],answer:0,translation:"แม้หิมะตกหนัก สนามบินก็ยังเปิดให้บริการตลอดช่วงเช้า",explanation:"ใช้ despite the heavy snow โดยไม่เติม of"},
+184:{parts:["He is responsible","of","checking the equipment","before each class"],answer:1,translation:"เขารับผิดชอบตรวจอุปกรณ์ก่อนเริ่มแต่ละชั้นเรียน",explanation:"สำนวนที่ถูกต้องคือ responsible for แก้ of เป็น for"},
+185:{parts:["The manager","has","write","a detailed report already"],answer:2,translation:"ผู้จัดการเขียนรายงานโดยละเอียดแล้ว",explanation:"หลัง has ใช้ V.3 แก้ write เป็น written"},
+186:{parts:["She practices","the piano","for one hour","everyday"],answer:3,translation:"เธอฝึกเล่นเปียโนวันละหนึ่งชั่วโมง",explanation:"เมื่อหมายถึงทุกวัน ให้เขียนแยกเป็น every day; everyday เป็น adjective"},
+187:{parts:["An useful manual","explains","the laboratory safety rules","clearly for new staff"],answer:0,translation:"คู่มือที่มีประโยชน์เล่มหนึ่งอธิบายกฎความปลอดภัยในห้องปฏิบัติการให้พนักงานใหม่เข้าใจชัดเจน",explanation:"useful ขึ้นต้นด้วยเสียง /ยู/ ซึ่งเป็นเสียงพยัญชนะ ใช้ a ไม่ใช่ an"},
+188:{parts:["One of my","friend","works at the airport","near the city center"],answer:1,translation:"เพื่อนคนหนึ่งของฉันทำงานที่สนามบินใกล้ใจกลางเมือง",explanation:"one of ตามด้วยคำนามพหูพจน์ แก้ friend เป็น friends"},
+189:{parts:["The guest","is","married with","the director of the company"],answer:2,translation:"แขกแต่งงานกับผู้อำนวยการของบริษัท",explanation:"สำนวนที่ถูกต้องคือ be married to someone แก้ with เป็น to"},
+190:{parts:["They discussed","the safety rules","in","detailed before starting work"],answer:3,translation:"พวกเขาหารือเกี่ยวกับกฎความปลอดภัยโดยละเอียดก่อนเริ่มงาน",explanation:"หลัง in ต้องใช้คำนาม detail แก้ detailed เป็น detail"}
+};
+let revisedErrorCount = 0;
+bank.forEach(function(q) {
+  const revision = errorRevisions[q.id];
+  if (!revision) return;
+  q.options = revision.parts;
+  q.answer = revision.answer;
+  q.stem = revision.parts.map(function(part, index) { return part + " (" + String.fromCharCode(65 + index) + ")"; }).join(" ") + ".";
+  q.translation = revision.translation;
+  q.explanation = revision.explanation;
+  revisedErrorCount++;
+});
+if (revisedErrorCount !== 60) throw Error("Expected 60 revised Error Identification items, found " + revisedErrorCount);
+
+const questionFixes = {
+10:{stem:"I _____ for two hours, and I haven't stopped yet, so I need a break."},
+13:{stem:"By the time the guests arrived, Sara had already _____ dinner.",options:["cooks","has cooked","cooked","will cook"],explanation:"เมื่อมี had already ตามด้วย V.3; had cooked แสดงว่าอาหารเสร็จก่อนแขกมาถึง"},
+14:{stem:"They _____ for an hour before the bus finally came.",options:["are waiting","had been waiting","have waited","will wait"]},
+195:{options:["organization","organize","organized","organizational"]},
+199:{stem:"This is the first time I _____ an application online.",explanation:"หลัง This is the first time ใช้ Present Perfect: have submitted"},
+201:{options:["drive","are driving","were driving","have driven"]},
+203:{options:["had been waiting","waits","has waited","is waiting"]},
+204:{options:["finish","will have finished","finished","have finished"]},
+208:{stem:"There _____ two changes to the schedule so far."},
+212:{options:["its","their","them","theirs"]},
+231:{stem:"The road was closed, and no detour was available; _____, the event had to be canceled."},
+250:{stem:"The clinic introduced a vaccination program to _____ people from becoming infected."},
+71:{stem:"Hotel guest: Could I have an extra towel, please? Housekeeping has confirmed one is ready to deliver. Receptionist: _____."},
+73:{stem:"Teacher: The assignment is due Friday, not Thursday. Student: Would you mind repeating the deadline? Teacher: _____.",options:["I can go over it again after class.","Could you tell me which part you missed?","Of course. The deadline is Friday, not Thursday.","I can repeat the example, but not the full explanation right now."]},
+74:{stem:"Passenger: I’m taking the 10:15 train to the airport, and the departure board shows platform four. Did I read it correctly? Staff: _____."},
+78:{stem:"Lee: How about meeting on Thursday? Pat has checked the calendar and is free that day. Pat: _____."},
+80:{stem:"Guard: Shall I show you the museum? The visitor wants a guided tour and accepts the offer. Visitor: _____."},
+81:{stem:"Mia: I'm sorry I'm late. Alex: We haven't started the meeting yet, so _____.",options:["Please message me earlier next time; we've already started.","Could you join by video until you get here?","That's all right. We haven't started yet.","We have moved on to the first item; I'll catch you up later."],translation:"มีาขอโทษที่มาสาย อเล็กซ์บอกว่ายังไม่ได้เริ่มประชุมและไม่เป็นไร",explanation:"ตอบรับคำขอโทษและบอกว่ายังไม่ได้เริ่มประชุม"},
+85:{stem:"Colleague: I found and corrected the mistake in the report. I apologize for it. The manager wants to accept the apology and thank the colleague for fixing it quickly. Manager: _____."},
+98:{options:["Thank you, but I'm full; perhaps later.","Could you save me a slice for tomorrow?","It looks nice, but I'd rather have fruit.","Yes, please. Thank you."]},
+100:{options:["Thanks, but I'd rather wait outside until everyone arrives.","Thank you. I’d be happy to come in.","Could I leave my coat in the car and come back later?","I'm comfortable already; could we start the presentation?"]},
+276:{stem:"A: I’m nervous about my presentation tomorrow. It is late at night, so I need a practical suggestion I can follow tonight. B: _____."},
+277:{stem:"A: Excuse me, this coffee is cold. Could you replace it with a freshly made cup rather than reheating this one? B: _____."},
+278:{stem:"A: I'm at the library. The map shows the post office is two blocks ahead, just past the bank on the left. How do I get there? B: _____."},
+279:{stem:"A: The station board says the direct Airport Express leaves from platform four every thirty minutes. Is that correct? B: _____."},
+281:{stem:"A: Thank you for explaining the instructions. I have no further questions right now. B: _____."},
+282:{stem:"A: I think we should take a taxi. You know the express train is faster and leaves in ten minutes, and you want to disagree politely. B: _____.",options:["That makes sense; the taxi should get us there quickly.","I see your point, but the express train is faster and leaves in ten minutes.","The taxi stand is outside the hotel.","I agree; the taxi rank is just across the street."]},
+287:{stem:"A: The route map shows this bus stops at the second stop after the bridge, near the university. Where should I get off? B: _____."},
+288:{stem:"A: I may be ten minutes late for the meeting. The team has agreed to wait so I can present first. B: _____."},
+291:{stem:"A: Are you ready to order? You have chosen the vegetable soup. B: _____."},
+293:{stem:"A: Could I exchange this shirt for a larger size? The clerk needs to check the store's stock before confirming an exchange. Clerk: _____."},
+296:{stem:"A: Could we move our meeting to Thursday? You have checked your calendar, are free, and want to accept. B: _____.",options:["I'm sorry, but I already have another appointment on Thursday.","Could we move it to Friday instead? Thursday is already full.","I thought we had agreed to meet on Tuesday.","Thursday works for me. What time should we meet?"]},
+297:{stem:"A: I don’t understand this form. B wants to explain the first section so A can complete it independently. B: _____."}
+};
+bank.forEach(function(q) { if (questionFixes[q.id]) Object.assign(q, questionFixes[q.id]); });
+passages.p6.text = passages.p6.text.replace("Staff taught people how to add money and check a balance.", "Staff showed residents how to add money to their travel cards and check their balances.");
+passages.p6.translation = "เมืองหนึ่งเริ่มใช้บัตรเดินทางร่วมกับรถบัส รถไฟ และเรือ ผู้โดยสารเปลี่ยนบริการได้โดยไม่ต้องซื้อตั๋วใหม่ทุกครั้ง ผู้สูงอายุบางคนสับสนจึงเปิดจุดช่วยเหลือที่สถานีใหญ่ เจ้าหน้าที่จุดช่วยเหลือสอนชาวบ้านเติมเงินในบัตรเดินทางและตรวจยอดเงิน ต่อมาผู้อยู่อาศัยใช้ขนส่งสาธารณะสำหรับการเดินทางระยะสั้นมากขึ้น เมืองยังต้องเพิ่มรอบบริการในย่านไกล แต่บัตรช่วยให้เปลี่ยนต่อรถง่ายขึ้น";
+Object.assign(bank.find(function(q){return q.id===114;}), {stem:"What do the weekend workshops teach?", options:["Repair skills","How to use an online reservation form","How to build a new library","How to sell used tools"], answer:0, explanation:"บทอ่านระบุว่าเวิร์กช็อปช่วงสุดสัปดาห์สอนทักษะการซ่อม"});
+Object.assign(bank.find(function(q){return q.id===129;}), {stem:"In the phrase 'their balances,' who does 'their' refer to?", options:["Residents who use the travel card","Transport staff","Ferries","Stations"], answer:0, explanation:"their หมายถึง residents ที่เจ้าหน้าที่สอนวิธีใช้บัตร"});
+Object.assign(bank.find(function(q){return q.id===314;}), {options:["It can receive official updates during a power outage.","It automatically stops storms.","It sends messages to officials without batteries.","It replaces every shelter."], answer:0, explanation:"บทอ่านระบุว่าวิทยุใช้ถ่านช่วยรับข่าวสำคัญระหว่างไฟดับ"});
+Object.assign(bank.find(function(q){return q.id===65;}), {stem:"We need to _____ an original solution that our team can present as its own proposal before Friday."});
+Object.assign(bank.find(function(q){return q.id===292;}), {stem:"A: The air conditioner in my room isn’t working. I can stay in the room if maintenance checks it. B: _____."});
+Object.assign(bank.find(function(q){return q.id===3;}), {options:["contribute","contribution","contributor","contributive"]});
+Object.assign(bank.find(function(q){return q.id===54;}), {options:["pay","keep","make","take"]});
+Object.assign(bank.find(function(q){return q.id===55;}), {stem:"The medicine may _____ patients of severe pain.",translation:"ยาอาจช่วยบรรเทาอาการปวดรุนแรงให้ผู้ป่วย",explanation:"relieve someone of pain เป็นสำนวนหมายถึงช่วยบรรเทาความเจ็บปวด"});
+Object.assign(bank.find(function(q){return q.id===60;}), {options:["discuss","discuss about","say about","tell"]});
+Object.assign(bank.find(function(q){return q.id===191;}), {options:["failure","fail","failed","unsuccessful"]});
+Object.assign(bank.find(function(q){return q.id===246;}), {stem:"The investigation report includes _____ from interviews with local residents that support its conclusion."});
+Object.assign(bank.find(function(q){return q.id===247;}), {stem:"Keep the receipt in case you need to _____ the item for a refund."});
+Object.assign(bank.find(function(q){return q.id===254;}), {stem:"Please _____ every blank on the application form before submitting it.",translation:"กรุณากรอกทุกช่องในแบบฟอร์มสมัครก่อนส่ง",explanation:"complete หมายถึงกรอกหรือทำให้ครบถ้วน"});
+Object.assign(bank.find(function(q){return q.id===256;}), {stem:"The library will _____ new members with free workshops on computer skills."});
+Object.assign(bank.find(function(q){return q.id===272;}), {stem:"A: Those boxes look heavy. You want to offer to carry one right now. B: _____."});
+Object.assign(bank.find(function(q){return q.id===292;}), {stem:"A: The air conditioner in my room isn’t working. I’d prefer to stay here if a technician can check it. B: _____."});
+Object.assign(bank.find(function(q){return q.id===223;}), {stem:"If a plant gets no water for a long time, it usually _____.",options:["wilts","wilt","wilting","wilted"],answer:0,translation:"ถ้าพืชไม่ได้รับน้ำนาน ๆ โดยปกติมันจะเหี่ยว",explanation:"Zero Conditional ใช้ Present Simple ทั้งสองส่วน และ it ต้องใช้กริยาเติม s: wilts"});
 const counts=bank.reduce(function(a,q){a[q.type]=(a[q.type]||0)+1;return a;},{});
 if(bank.length!==320||counts.grammar!==100||counts.error!==60||counts.vocabulary!==50||counts.dialogue!==60||counts.reading!==50)throw Error("Question count mismatch "+JSON.stringify(counts));
 window.EXAM_BANK=bank; window.EXAM_PASSAGES=passages;
