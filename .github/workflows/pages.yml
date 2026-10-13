@@ -23,10 +23,17 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+      - name: Stage website files
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          cp -R dist/. "$RUNNER_TEMP/site/"
+          test -f "$RUNNER_TEMP/site/index.html"
       - name: Upload website files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/
+          path: ${{ runner.temp }}/site/
+      - name: Verify artifact root
+        run: tar -tf "$RUNNER_TEMP/artifact.tar" | grep -Fx './index.html'
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v5
